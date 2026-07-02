@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Qalakar Portal</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+body{
+    margin:0;
+    font-family:sans-serif;
+    height:100vh;
+    overflow:hidden;
+}
+
+/* BACKGROUND IMAGE LAYER */
+body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background-image:url("https://i.pinimg.com/1200x/0d/5c/ff/0d5cff92c8466551853f9864baba4c14.jpg");
+    background-size:cover;
+    background-position:center;
+    filter:blur(8px);
+    transform:scale(1.1);
+    z-index:-2;
+}
+
+/* DARK OVERLAY */
+body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.35);
+    z-index:-1;
+}
+</style>
+</head>
+
+<body class="flex items-center justify-center">
+
+<!-- GLASS CARD -->
+<div class="text-center bg-white/20 backdrop-blur-md p-12 rounded-3xl shadow-2xl border border-white/30">
+
+    <h1 class="text-5xl font-bold mb-10 text-white drop-shadow-lg">Qalakar.ai</h1>
+
+    <div class="flex gap-10 justify-center">
+        <a href="buyer.html" class="px-10 py-4 bg-[#5d0e0e] text-white rounded-xl text-xl shadow-lg hover:scale-105 transition">
+            Buyer Portal
+        </a>
+
+        <a href="artisan.html" class="px-10 py-4 bg-[#c99a2e] text-white rounded-xl text-xl shadow-lg hover:scale-105 transition">
+            Artisan Portal
+        </a>
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Qalakar Buyer Portal</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    position: relative;
+    z-index: 0;
+}
+
+/* 🌄 Blurred background image */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: url("https://i.pinimg.com/736x/f7/8c/8f/f78c8feddc74b265047c3fe69ab2d04e.jpg");
+    background-size: cover;
+    background-position: center;
+    filter: blur(7px) brightness(0.75);
+    z-index: -2;
+}
+
+/* ✨ Glass overlay only behind content */
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
+    z-index: -1;
+}
+
+.heading-font { font-family: 'Playfair Display', serif; }
+
+nav {
+    background:#5d0e0e;
+    color:white;
+}
+
+.slider { overflow:hidden; padding:20px 0; }
+.slide-track { display:flex; gap:25px; animation:scroll 35s linear infinite; }
+
+@keyframes scroll {
+0%{transform:translateX(0)}
+100%{transform:translateX(-50%)}
+}
+
+.product {
+    width:280px;
+    flex-shrink:0;
+    background:white;
+    border-radius:20px;
+    transition:0.3s;
+    box-shadow:0 8px 20px rgba(0,0,0,0.2);
+    padding:15px;
+}
+
+.product:hover { transform:translateY(-6px); }
+
+.grid-mode { animation:none !important; flex-wrap:wrap; justify-content:center; }
+.hidden { display:none !important; }
+
+.badge { font-size:12px; padding:4px 8px; border-radius:20px; margin-top:5px; display:inline-block; }
+.verified { background:#d1fae5; color:#065f46; }
+
+#map { height:420px; border-radius:20px; }
+.profile { 
+    background:white; 
+    padding:25px; 
+    border-radius:15px; 
+    box-shadow:0 5px 15px rgba(0,0,0,0.2); 
+    display:flex; 
+    flex-direction:column; 
+    gap:10px;
+}
+
+input {
+    background:white;
+}
+input:focus {
+    box-shadow:0 0 10px rgba(201,154,46,0.7);
+    outline:none;
+}
+
+/* Reviews scrolling next to Visit button */
+.reviews-container {
+    display:flex;
+    align-items:center;
+    overflow:hidden;
+    width:100%;
+    margin-left:20px;
+}
+
+.reviews-row {
+    display:flex;
+    gap:10px;
+    animation: scrollReviews 15s linear infinite;
+}
+
+.review {
+    background:#f5f5f5;
+    color:#333;
+    padding:5px 10px;
+    border-radius:8px;
+    font-size:12px;
+    white-space:nowrap;
+}
+
+@keyframes scrollReviews {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+}
+</style>
+</head>
+
+<body>
+
+<nav class="p-6 flex justify-between items-center">
+<h1 class="text-2xl font-bold">Qalakar Heritage Marketplace</h1>
+</nav>
+
+<div class="p-10">
+
+<h2 class="heading-font text-4xl font-bold text-center mb-8 text-white">
+From Village Hands to Global Homes
+</h2>
+
+<!-- SEARCH -->
+<div class="max-w-xl mx-auto mb-10 relative">
+<input id="searchInput" onkeyup="filterProducts()" class="w-full p-4 pl-5 pr-12 rounded-full shadow" placeholder="Search handicrafts...">
+<i class="fas fa-microphone absolute right-6 top-5 text-xl cursor-pointer text-[#5d0e0e]" onclick="voiceSearch()"></i>
+</div>
+
+<!-- PRODUCTS -->
+<div class="slider">
+<div class="slide-track" id="track"></div>
+</div>
+
+<div id="profileBox" class="profile hidden mt-10"></div>
+
+<h2 class="text-3xl mt-16 mb-6 text-white">Explore Craft Villages</h2>
+<div id="map"></div>
+
+</div>
+
+<script>
+// Products Data
+const products=[
+["Terracotta Pot","UP | Ram Singh","https://i.pinimg.com/736x/85/9d/fc/859dfc21b166003986a434312ff799be.jpg","terracotta pot clay up",26.8,80.9,"Ram Singh","Terracotta Artist","Clay craft legacy","UP Trail"],
+["Madhubani Painting","Bihar | Sita Devi","https://i.pinimg.com/1200x/fb/81/56/fb81560633da84e1acbef3c8a1009f00.jpg","madhubani painting bihar",25.6,85.1,"Sita Devi","Mithila Painter","Natural colors tradition","Bihar Trail"],
+["Pashmina Shawl","Kashmir | Ali Khan","https://i.pinimg.com/1200x/85/29/0d/85290d9429bf522bce28d3eaedc9a48f.jpg","pashmina shawl kashmir",34.08,74.79,"Ali Khan","Weaver","Pure wool handwoven","Kashmir Trail"],
+["Blue Pottery","Rajasthan | Mohan Lal","https://gaatha.com/wp-content/uploads/Blue-pottery-2.jpg","blue pottery rajasthan",26.91,75.78,"Mohan Lal","Ceramic Artist","Jaipur blue pottery","Rajasthan Trail"],
+["Wooden Toys","Karnataka | Ramesh","https://i.pinimg.com/736x/61/20/bc/6120bc75e732567f8a7336d0253d7406.jpg","wooden toys karnataka",12.97,77.59,"Ramesh","Toy Maker","Eco-friendly toys","Karnataka Trail"]
+];
+
+// Reviews Data
+const reviews = {
+  "Ram Singh":["Beautiful craftsmanship!","Loved the terracotta finish.","Highly recommend!"],
+  "Sita Devi":["Amazing colors!","Authentic Mithila style.","Gorgeous work!"],
+  "Ali Khan":["Very soft Pashmina.","Elegant handwoven quality.","Worth every penny."],
+  "Mohan Lal":["Stunning blue pottery!","Looks perfect on my shelf.","Eye-catching colors!"],
+  "Ramesh":["Kids loved the toys!","Eco-friendly and safe.","Durable and fun!"]
+};
+
+let track=document.getElementById("track");
+
+products.forEach((p,i)=>{
+track.innerHTML+=`
+<div class="product p-6" data-key="${p[3]}">
+<img src="${p[2]}" class="rounded mb-3">
+<h3 class="font-bold">${p[0]}</h3>
+<p>${p[1]}</p>
+<p>AI Price: ₹<span class="price"></span></p>
+<div id="badge${i}" class="badge"></div>
+<button onclick="verify(${i})" class="mt-2 bg-[#c99a2e] text-white px-3 py-1 rounded text-sm">AI Scan</button>
+<button onclick="profile('${p[6]}','${p[7]}','${p[8]}','${p[9]}',${p[4]},${p[5]})" class="mt-2 bg-[#5d0e0e] text-white px-3 py-1 rounded text-sm">Artisan</button>
+</div>`});
+
+// Map
+var map=L.map('map').setView([22.9,78.6],5);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+// Functions
+function filterProducts(){
+let q=searchInput.value.toLowerCase();
+let cards=document.querySelectorAll('.product');
+if(q.length>0){track.classList.add('grid-mode')} else {track.classList.remove('grid-mode')}
+cards.forEach(c=>c.classList.toggle('hidden',!c.dataset.key.includes(q)));
+}
+
+function voiceSearch(){
+let r=new(window.SpeechRecognition||window.webkitSpeechRecognition)();
+r.lang="en-IN"; r.start();
+r.onresult=e=>{searchInput.value=e.results[0][0].transcript; filterProducts();}
+}
+
+function verify(id){
+let b=document.getElementById('badge'+id);
+b.className="badge verified"; b.innerText="✔ Authentic Handmade";
+}
+
+function profile(n,s,st,t,lat,lng){
+profileBox.classList.remove('hidden');
+let reviewHTML = "";
+if(reviews[n]){
+  reviews[n].forEach(r=>{
+    reviewHTML += `<div class="review">${r}</div>`;
+  });
+}
+
+profileBox.innerHTML=`<h3 class="text-2xl font-bold">${n}</h3>
+<p>${s}</p>
+<p>${st}</p>
+<p><b>Trail:</b> ${t}</p>
+<div style="display:flex; align-items:center; gap:20px; width:100%;">
+  <button onclick="visit(${lat},${lng})" class="mt-3 bg-[#c99a2e] text-white px-4 py-2 rounded">Visit Village</button>
+  <div class="reviews-container">
+    <div class="reviews-row">${reviewHTML}</div>
+  </div>
+</div>`;
+}
+
+function visit(lat,lng){map.setView([lat,lng],10);L.marker([lat,lng]).addTo(map)}
+
+document.querySelectorAll('.price').forEach(p=>{
+let golden=Math.round((Math.random()*200+300+Math.random()*400+500+Math.random()*150+200)/3);
+p.innerText=golden;
+});
+</script>
+
+</body>
+</html>

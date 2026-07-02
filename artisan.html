@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qalakar AI Inclusion Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 🌄 Blurred background image */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image: url("https://i.pinimg.com/736x/ed/b4/e6/edb4e6aa60e11d393a81b4a4241a8345.jpg");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+
+            /* 👇 Soft effect — image still clearly visible */
+            filter: blur(0.5px) brightness(0.85);
+
+            z-index: -2;
+        }
+
+
+        /* ✨ Glass overlay only behind content */
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            z-index: -1;
+        }
+
+        .heading-font {
+            font-family: 'Playfair Display', serif;
+        }
+
+        body {
+            background: #fdfaf5;
+            font-family: sans-serif;
+        }
+
+        .card {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="p-5 bg-[#c99a2e] text-white flex justify-between">
+        <h1 class="text-2xl font-bold">Qalakar AI</h1>
+    </nav>
+
+    <!-- DIGITAL INCLUSION MESSAGE -->
+    <div class="max-w-5xl mx-auto mt-8 bg-white p-6 rounded card">
+        <h2 class="text-2xl font-semibold mb-2">Empowering artisans with digital identity, fair pricing, and global reach.</h2>
+        <p class="text-gray-700">
+            
+        </p>
+    </div>
+
+    <!-- REGISTRATION -->
+    <div class="p-10 max-w-xl mx-auto bg-white rounded card mt-10">
+
+        <h2 class="text-3xl mb-6 font-semibold">Register Craft</h2>
+
+        <input id="name" class="w-full p-3 border mb-4" placeholder="Artisan Name">
+        <input id="craft" class="w-full p-3 border mb-4" placeholder="Craft Type (pottery, textiles, art, woodcraft)">
+        <input id="rawCost" type="number" class="w-full p-3 border mb-4" placeholder="Raw Material Cost (₹)">
+
+        <!-- VOICE INPUT -->
+        <button onclick="startListening()" class="px-6 py-2 bg-blue-600 text-white rounded mb-3">
+            🎙 Speak Craft Description
+        </button>
+
+        <textarea id="voiceText" class="w-full p-3 border mb-4"
+            placeholder="Voice captured text appears here"></textarea>
+
+        <button onclick="runAI()" class="px-6 py-3 bg-[#5d0e0e] text-white rounded">
+            Generate AI Selling Price
+        </button>
+
+        <div id="resultBox" class="mt-8 text-lg font-medium"></div>
+        <div id="translationBox" class="mt-6 text-blue-700 font-medium"></div>
+
+    </div>
+
+    <!-- TRUST SECTION -->
+    <div class="max-w-5xl mx-auto mt-10 bg-white p-6 rounded card">
+        <h2 class="text-2xl font-semibold mb-2">🛡 Trust & Authenticity</h2>
+        <p class="text-gray-700">
+            In a market flooded with machine-made goods falsely labeled as “handmade,” Qalakar ensures authenticity.
+            Each product is linked to its artisan, location, and cultural heritage, protecting true creators and
+            preserving trust for global buyers.
+        </p>
+    </div>
+
+    <script>
+
+        // VOICE RECOGNITION
+        function startListening() {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = "hi-IN"; // can capture Hindi/Indian dialects
+            recognition.start();
+
+            recognition.onresult = function (event) {
+                document.getElementById("voiceText").value = event.results[0][0].transcript;
+            };
+        }
+
+        // SIMPLE NLP TRANSLATION SIMULATION
+        function translateToEnglish(text) {
+            return "Handcrafted item described as: " + text;
+        }
+
+        // AI PRICING DATA
+        const craftPopularity = { pottery: 1.2, textiles: 1.5, art: 1.6, woodcraft: 1.1 };
+        const competitorUrbanPrice = { pottery: 1500, textiles: 4000, art: 6000, woodcraft: 2500 };
+        const cityDemandMultiplier = 1.33;
+
+        function calculateGoldenPrice(rawCost, craft) {
+            let popularity = craftPopularity[craft] || 1.1;
+            let competitor = competitorUrbanPrice[craft] || 2000;
+
+            let base = rawCost * 1.6;
+            let demandComponent = competitor * cityDemandMultiplier * popularity * 0.5;
+            let protectionBuffer = rawCost * 0.4;
+
+            return Math.round(base + demandComponent + protectionBuffer);
+        }
+
+        async function getLocation() {
+            return new Promise(resolve => {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+                });
+            });
+        }
+
+        async function runAI() {
+            let name = document.getElementById("name").value;
+            let craft = document.getElementById("craft").value.toLowerCase();
+            let rawCost = parseInt(document.getElementById("rawCost").value);
+            let voiceText = document.getElementById("voiceText").value;
+
+            if (!name || !craft || !rawCost || !voiceText) {
+                alert("Please complete all fields and voice description");
+                return;
+            }
+
+            let goldenPrice = calculateGoldenPrice(rawCost, craft);
+            let location = await getLocation();
+            let translated = translateToEnglish(voiceText);
+
+            document.getElementById("translationBox").innerHTML =
+                "🌐 Professional English Listing: <br>" + translated;
+
+            document.getElementById("resultBox").innerHTML = `
+👤 Artisan: ${name} <br>
+📍 Location Tagged: ${location.lat.toFixed(2)}, ${location.lon.toFixed(2)} <br><br>
+💰 FINAL AI SELLING PRICE: <span class="text-2xl text-green-700 font-bold">₹${goldenPrice}</span>
+`;
+        }
+
+    </script>
+
+</body>
+
+</html>

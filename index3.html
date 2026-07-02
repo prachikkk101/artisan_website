@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ArtisanConnect AI | Heritage Intelligence Command Center</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8f9fa; }
+        .glass-effect { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(16px); }
+        .craft-slide { transition: opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        .zoom-img { transition: transform 10s linear; transform: scale(1); }
+        .active .zoom-img { transform: scale(1.15); }
+        .feature-card { transition: all 0.3s ease; border: 1px solid #eef0f2; }
+        .feature-card:hover { transform: translateY(-8px); border-color: #6366f1; box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.1); }
+        #map { height: 450px; border-radius: 2.5rem; z-index: 10; border: 4px solid white; }
+        .shimmer { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 2s infinite; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    </style>
+</head>
+
+<body class="text-slate-900">
+
+<nav class="sticky top-0 z-[100] glass-effect px-8 py-4 flex justify-between items-center border-b border-slate-200">
+    <div class="flex items-center gap-2">
+        <div class="w-10 h-10 bg-indigo-600 rounded-xl text-white flex items-center justify-center font-bold shadow-lg shadow-indigo-200 text-xl">A</div>
+        <span class="text-2xl font-bold tracking-tight text-slate-800 underline decoration-indigo-500 decoration-4">ArtisanConnect.ai</span>
+    </div>
+    <div class="flex items-center gap-6">
+        <div class="hidden md:flex flex-col items-end">
+            <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">AWS Bedrock Active</span>
+            <span class="text-xs text-slate-500">v2.4 Neural Suite</span>
+        </div>
+        <button class="bg-slate-900 hover:bg-indigo-700 transition-all text-white px-8 py-2.5 rounded-full text-sm font-bold shadow-xl">
+            Connect Wallet
+        </button>
+    </div>
+</nav>
+
+<main class="max-w-7xl mx-auto px-6 py-12">
+
+    <header class="mb-12">
+        <h1 class="text-5xl font-extrabold mb-4 tracking-tight leading-tight">Artisan <span class="text-indigo-600">Command Center</span></h1>
+        <p class="text-xl text-slate-500 max-w-2xl">Empowering rural craftsmanship with Computer Vision, NLP, and Fair-Economic modeling.</p>
+    </header>
+
+    <div class="grid lg:grid-cols-2 gap-8 mb-16">
+        
+        <div class="bg-white p-10 rounded-[3rem] border border-slate-200 shadow-sm flex flex-col h-full">
+            <div class="mb-8">
+                <span class="bg-indigo-100 text-indigo-600 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-4 inline-block">ML Feature #4: Vision AI</span>
+                <h2 class="text-3xl font-bold mb-3">Trust & Authenticity Engine</h2>
+                <p class="text-slate-500 leading-relaxed">Our neural network scrutinizes weave density and natural dye variations to verify 100% handmade products.</p>
+            </div>
+            
+            <div id="dropzone" class="flex-grow border-4 border-dashed border-slate-100 rounded-[2.5rem] p-12 text-center cursor-pointer bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 transition-all group flex flex-col items-center justify-center">
+                <div class="text-7xl mb-6 group-hover:scale-110 transition-transform">📸</div>
+                <p class="text-2xl font-bold text-slate-700">Scan Product for Origin</p>
+                <p class="text-slate-400 mt-2">Amazon Rekognition Pattern Analysis</p>
+                <input type="file" id="fileInput" class="hidden">
+            </div>
+
+            <div id="mlResults" class="hidden mt-8 p-8 bg-indigo-600 text-white rounded-[2.5rem] shadow-2xl shadow-indigo-200">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl">🏷️</div>
+                    <div>
+                        <p class="text-xs uppercase font-black tracking-widest text-indigo-200">AI Analysis Complete</p>
+                        <h3 class="text-xl font-bold">Kalamkari Textile Detected</h3>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-sm bg-black/10 p-4 rounded-2xl">
+                    <div><span class="block opacity-60">Authenticity</span><span class="font-bold">98.2% (Handmade)</span></div>
+                    <div><span class="block opacity-60">Source Cluster</span><span class="font-bold">Machilipatnam</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-6">
+            <div class="bg-white p-4 rounded-[3rem] border border-slate-200 shadow-sm relative overflow-hidden flex-grow">
+                <div class="absolute top-10 left-10 z-[50] glass-effect px-5 py-3 rounded-2xl border border-slate-100 shadow-xl">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">ML Feature #5: Mapping</p>
+                    <p class="font-bold text-slate-800" id="map-status">Tracking Heritage Origins...</p>
+                </div>
+                <div id="map"></div>
+            </div>
+
+            <div class="bg-indigo-600 p-8 rounded-[2.5rem] text-white flex items-center justify-between shadow-xl shadow-indigo-200">
+                <div class="max-w-[60%]">
+                    <h3 class="font-bold text-xl mb-2 italic">Linguistic Inclusion</h3>
+                    <p class="text-indigo-100 text-xs">Convert rural dialects to professional listings using Bedrock NLP.</p>
+                </div>
+                <button id="micBtn" class="bg-white text-indigo-600 h-16 w-16 rounded-full flex items-center justify-center text-2xl hover:scale-110 transition-all shadow-lg">🎙️</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-20">
+        <h2 class="text-2xl font-bold mb-10 flex items-center gap-4">
+            <span class="flex-grow h-[1px] bg-slate-200"></span>
+            Intelligence Stack Overview
+            <span class="flex-grow h-[1px] bg-slate-200"></span>
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="feature-card bg-white p-8 rounded-[2.5rem]">
+                <div class="text-3xl mb-4 text-blue-500">📍</div>
+                <h3 class="font-bold text-lg mb-2 text-slate-800">Hyperlocal Discovery</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">Amazon Personalize engine matching GPS-based supply with global buyer intent.</p>
+            </div>
+            <div class="feature-card bg-white p-8 rounded-[2.5rem]">
+                <div class="text-3xl mb-4 text-green-500">⚖️</div>
+                <h3 class="font-bold text-lg mb-2 text-slate-800">Goldilocks Pricing</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">ML model ensuring "Golden Prices" that maximize artisan profit while remaining market attractive.</p>
+            </div>
+            <div class="feature-card bg-white p-8 rounded-[2.5rem]">
+                <div class="text-3xl mb-4 text-purple-500">🗣️</div>
+                <h3 class="font-bold text-lg mb-2 text-slate-800">NLP Translation</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">Removing linguistic barriers by professionalizing indigenous artisan voices for the global stage.</p>
+            </div>
+            <div class="feature-card bg-white p-8 rounded-[2.5rem]">
+                <div class="text-3xl mb-4 text-orange-500">🏺</div>
+                <h3 class="font-bold text-lg mb-2 text-slate-800">Digital Identity</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">Creating verifiable digital portfolios for clusters that were previously offline and invisible.</p>
+            </div>
+            <div class="feature-card bg-white p-8 rounded-[2.5rem]">
+                <div class="text-3xl mb-4 text-pink-500">🧪</div>
+                <h3 class="font-bold text-lg mb-2 text-slate-800">Material Integrity</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">Vision AI analysis of mineral pigments and organic fibers to ensure 100% eco-friendly sourcing.</p>
+            </div>
+            <div class="feature-card bg-white p-8 rounded-[2.5rem]">
+                <div class="text-3xl mb-4 text-teal-500">🌍</div>
+                <h3 class="font-bold text-lg mb-2 text-slate-800">Tourism Mapping</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">Using Location Services to drive "Craft Tourism" directly to verified artisan village clusters.</p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // 1. MAP INITIALIZATION
+    const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([22.5937, 78.9629], 5);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+
+    const craftClusters = [
+        { name: "Kalamkari Cluster", coords: [16.18, 81.13], color: "#6366f1" },
+        { name: "Blue Pottery Cluster", coords: [26.91, 75.78], color: "#3b82f6" },
+        { name: "Dokra Cluster", coords: [20.29, 85.82], color: "#ec4899" }
+    ];
+
+    craftClusters.forEach(cluster => {
+        L.circle(cluster.coords, {
+            color: cluster.color,
+            fillColor: cluster.color,
+            fillOpacity: 0.3,
+            radius: 50000
+        }).addTo(map).bindPopup(`<b>${cluster.name}</b>`);
+    });
+
+    // 2. SCANNER LOGIC
+    const dropzone = document.getElementById("dropzone");
+    const fileInput = document.getElementById("fileInput");
+    const mlResults = document.getElementById("mlResults");
+    const mapStatus = document.getElementById("map-status");
+
+    dropzone.onclick = () => fileInput.click();
+
+    fileInput.onchange = () => {
+        dropzone.classList.add('shimmer');
+        dropzone.innerHTML = `<div class="text-4xl animate-bounce">📡</div><p class="font-black text-indigo-600 mt-4 uppercase">AI: Scrutinizing Weave Pattern...</p>`;
+        
+        setTimeout(() => {
+            dropzone.classList.add("hidden");
+            mlResults.classList.remove("hidden");
+            mapStatus.innerHTML = "📍 <span class='text-indigo-600'>Origin: Andhra Pradesh Cluster</span>";
+            
+            // Sat-Zoom Map Animation
+            map.flyTo([16.18, 81.13], 10, { animate: true, duration: 3 });
+            
+            setTimeout(() => {
+                L.popup().setLatLng([16.18, 81.13]).setContent("<b>Authentic Source Confirmed</b><br>Machilipatnam Hub").openOn(map);
+            }, 3200);
+        }, 2500);
+    };
+
+    // 3. VOICE LOGIC SIMULATION
+    const micBtn = document.getElementById('micBtn');
+    micBtn.onclick = () => {
+        micBtn.innerHTML = `<span class="animate-ping text-white text-xs">●</span>`;
+        setTimeout(() => {
+            micBtn.innerHTML = `✅`;
+            micBtn.classList.replace('bg-white', 'bg-green-400');
+            micBtn.classList.replace('text-indigo-600', 'text-white');
+        }, 3000);
+    };
+</script>
+
+</body>
+</html>
